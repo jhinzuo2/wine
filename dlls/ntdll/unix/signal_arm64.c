@@ -64,6 +64,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 #define NTDLL_DWARF_H_NO_UNWINDER
 #include "dwarf.h"
 
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, cpu_data[1] ) == 0x2f8 );
+
 /***********************************************************************
  * signal context platform-specific definitions
  */
@@ -1364,6 +1366,8 @@ void signal_init_threading(void)
  */
 NTSTATUS signal_alloc_thread( TEB *teb )
 {
+    /* cpu_data[1] lives at TEB offset 0x2f8; the syscall stubs in asm.h load it via x18 */
+    ((struct ntdll_thread_data *)&teb->GdiTebBatch)->cpu_data[1] = __wine_syscall_dispatcher;
     return STATUS_SUCCESS;
 }
 
